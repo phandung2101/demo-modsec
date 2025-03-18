@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  # The vulnerable application (OWASP Juice Shop)
+  juiceshop:
+    image: bkimminich/juice-shop:latest
+    container_name: juiceshop
+    restart: unless-stopped
+    networks:
+      - waf-network
+    # Not exposing ports directly to host - only accessible through WAF
+
+  # ModSecurity WAF with OWASP CRS
+  modsecurity:
+    image: owasp/modsecurity-crs:4-nginx-alpine
+    container_name: waf
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # HTTP
+      - "8443:8443"  # HTTPS
+    environment:
+      # Core WAF settings
+      - BACKEND=http://juiceshop:3000
+      - SERVER_NAME=juiceshop-waf
+      - MODSEC_AUDIT_ENGINE=On
+      - MODSEC_AUDIT_LOG_FORMAT=JSON
+      - MODSEC_RULE_ENGINE=On
+      - PROXY_TIMEOUT=120
+      
+      # Core Rule Set settings
+      - BLOCKING_PARANOIA=1       # Start with paranoia level 1 (can be increased to 2-4 for more strict protection)
+      - DETECTION_PARANOIA=2      # Detect at level 2 but only block at level 1
+      - ANOMALY_INBOUND=5         # Threshold for blocking requests
+      - ANOMALY_OUTBOUND=4        # Threshold for blocking responses
+      
+      # Logging settings
+      - LOGLEVEL=warn
+      - ERRORLOG=/dev/stdout
+      - ACCESSLOG=/dev/stdout
+      - MODSEC_AUDIT_LOG=/dev/stdout
+      
+      # Allow common operations for Juice Shop to function
+      - ALLOWED_METHODS=GET HEAD POST PUT DELETE OPTIONS PATCH
+      - ALLOWED_REQUEST_CONTENT_TYPE=|application/x-www-form-urlencoded| |multipart/form-data| |multipart/related| |text/xml| |application/xml| |application/soap+xml| |application/json| |application/cloudevents+json| |application/cloudevents-batch+json|
+    volumes:
+      # Add custom exclusion rules to prevent false positives
+      - ./REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+      - ./RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+    networks:
+      - waf-network
+
+networks:
+  waf-network:
+    driver: bridge
