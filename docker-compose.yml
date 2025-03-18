@@ -14,7 +14,7 @@ services:
 
   # ModSecurity WAF with OWASP CRS
   modsecurity:
-    image: owasp/modsecurity-crs:nginx
+    image: owasp/modsecurity-crs:apache
     restart: unless-stopped
     ports:
       - "80:80"  # HTTP
