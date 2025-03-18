@@ -21,7 +21,7 @@ services:
       - "8443:8443"  # HTTPS
     environment:
       # Core WAF settings
-      - BACKEND=http://localhost:3000
+      - BACKEND=http://juiceshop:3000
       - MODSEC_AUDIT_ENGINE=On
       - MODSEC_AUDIT_LOG_FORMAT=JSON
       - MODSEC_RULE_ENGINE=On
