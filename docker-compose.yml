@@ -12,8 +12,7 @@ services:
 
   # ModSecurity WAF with OWASP CRS
   modsecurity:
-    image: owasp/modsecurity-crs:4-nginx-alpine
-    container_name: waf
+    image: owasp/modsecurity-crs:nginx
     restart: unless-stopped
     ports:
       - "8080:8080"  # HTTP
