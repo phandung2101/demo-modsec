@@ -1,42 +1,33 @@
 #!/bin/bash
 
-# Debug mode
+# Hiển thị các thông báo debug
 set -x
 
-echo "Configuring fail2ban..."
+# Đảm bảo thư mục socket cho fail2ban tồn tại
+mkdir -p /var/run/fail2ban
 
-# Đảm bảo các thư mục tồn tại
-mkdir -p /var/log/nginx /var/run/fail2ban
-
-# Tạo các file log nếu chưa tồn tại
+# Tạo file log cho fail2ban
 touch /var/log/fail2ban.log
+
+# Kiểm tra các file cấu hình
+echo "Checking fail2ban configuration files..."
+ls -la /etc/fail2ban/
+ls -la /etc/fail2ban/filter.d/
+
+# Khởi động fail2ban với verbose mode
+echo "Starting fail2ban..."
+fail2ban-client -x start
+
+# Hiển thị trạng thái và kiểm tra xem fail2ban đã chạy chưa
+sleep 2
+fail2ban-client ping
+fail2ban-client status
+
+# Đảm bảo thư mục log Nginx tồn tại và có quyền truy cập đúng
+mkdir -p /var/log/nginx
 touch /var/log/nginx/juiceshop_login.log
-
-# Kiểm tra cấu hình fail2ban
-echo "Checking fail2ban configuration..."
-fail2ban-client -t || true
-
-# Đảm bảo fail2ban có quyền truy cập vào file log
 chmod 644 /var/log/nginx/juiceshop_login.log
 
-# Khởi động fail2ban
-echo "Starting fail2ban..."
-/usr/bin/fail2ban-client start || true
-
-# Hiển thị trạng thái fail2ban
-sleep 2
-echo "Fail2ban status:"
-/usr/bin/fail2ban-client status || true
-
-# Khởi động jail
-echo "Reloading juiceshop jail..."
-/usr/bin/fail2ban-client reload || true
-/usr/bin/fail2ban-client reload juiceshop || true
-
-# Kiểm tra xem jail juiceshop đã được định nghĩa chưa
-echo "Checking juiceshop jail:"
-/usr/bin/fail2ban-client status juiceshop || true
-
-# Để fail2ban chạy nền và khởi động nginx
-echo "Starting nginx in foreground..."
-exec /docker-entrypoint.sh nginx -g "daemon off;"
+# Khởi động Nginx (dùng lệnh khởi động mặc định của container gốc)
+echo "Starting Nginx..."
+/docker-entrypoint.sh nginx -g "daemon off;"

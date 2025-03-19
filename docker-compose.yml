@@ -29,6 +29,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      # Tạo volume cho các file log để fail2ban có thể đọc
       - ./logs:/var/log/nginx
     cap_add:
       - NET_ADMIN
@@ -36,4 +37,5 @@ services:
     depends_on:
       - juice-shop
     restart: unless-stopped
+    # Sử dụng privileged mode để fail2ban có thể cập nhật iptables
     privileged: true
