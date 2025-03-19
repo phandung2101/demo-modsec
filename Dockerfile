@@ -1,10 +1,10 @@
 FROM owasp/modsecurity-crs:3.3.4-nginx-alpine-202301110601@sha256:46c78b60dff1c3767782d147657ff1058f99b3e538eeb6149b1ccd76bf582a34
 
-# Cài đặt fail2ban và các gói phụ thuộc (bỏ py3-pyinotify vì không có sẵn)
-RUN apk add --no-cache fail2ban python3 bash iptables procps
+# Cài đặt fail2ban và các gói phụ thuộc
+RUN apk add --no-cache fail2ban python3 py3-pyinotify bash iptables procps
 
 # Đảm bảo các thư mục cần thiết tồn tại
-RUN mkdir -p /var/log/nginx /var/run/fail2ban /etc/fail2ban/jail.d /etc/fail2ban/filter.d
+RUN mkdir -p /var/log/nginx /var/run/fail2ban /etc/fail2ban/filter.d
 
 # Copy Nginx configuration
 COPY default.conf /etc/nginx/templates/conf.d/default.conf.template
