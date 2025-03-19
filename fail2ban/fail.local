@@ -1,0 +1,22 @@
+[DEFAULT]
+# Ban hosts cho 10 phút (600 giây)
+bantime = 600
+# Kiểm tra các mẫu ở file log trong 10 phút
+findtime = 600
+# Số lần thử đăng nhập không thành công trước khi bị ban
+maxretry = 5
+# Kích hoạt ban ngay lập tức khi phát hiện
+banaction = iptables-multiport
+banaction_allports = iptables-allports
+# Hành động thông báo - có thể được bỏ qua hoặc cấu hình riêng
+#action = %(action_mw)s
+
+# Jail cho Juice Shop
+[juiceshop]
+enabled = true
+filter = juiceshop
+logpath = /var/log/nginx/juiceshop_login.log
+port = 80,443
+maxretry = 5
+findtime = 600
+bantime = 3600

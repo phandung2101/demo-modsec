@@ -28,6 +28,13 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      # Tạo volume cho các file log để fail2ban có thể đọc
+      - ./logs:/var/log/nginx
+      # Volume cho thư mục cấu hình fail2ban (tùy chọn, để dễ dàng cập nhật)
+      - ./fail2ban:/etc/fail2ban
     depends_on:
       - juice-shop
     restart: unless-stopped
+    # Sử dụng privileged mode để fail2ban có thể cập nhật iptables
+    privileged: true
