@@ -1,53 +1,33 @@
-version: '3'
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24
 
 services:
-  # The vulnerable application (OWASP Juice Shop)
-  juiceshop:
-    image: bkimminich/juice-shop:latest
-    container_name: juiceshop
+  juice-shop:
+    image: bkimminich/juice-shop
+    container_name: juice_shop
+    hostname: juice.shop
+    networks:
+      backend:
+        ipv4_address: 10.10.10.100
     ports:
       - "3000:3000"
     restart: unless-stopped
-    networks:
-      - waf-network
-    # Not exposing ports directly to host - only accessible through WAF
 
-  # ModSecurity WAF with OWASP CRS
-  modsecurity:
-    image: owasp/modsecurity-crs:apache
-    restart: unless-stopped
+  nginx-modsec:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nginx-modsec
+    networks:
+      backend:
+        ipv4_address: 10.10.10.200
     ports:
-      - "80:80"  # HTTP
-    environment:
-      # Core WAF settings
-      - BACKEND=http://juiceshop:3000
-      - MODSEC_AUDIT_ENGINE=On
-      - MODSEC_AUDIT_LOG_FORMAT=JSON
-      - MODSEC_RULE_ENGINE=On
-      - PROXY_TIMEOUT=120
-      
-      # Core Rule Set settings
-      - BLOCKING_PARANOIA=1       # Start with paranoia level 1 (can be increased to 2-4 for more strict protection)
-      - DETECTION_PARANOIA=2      # Detect at level 2 but only block at level 1
-      - ANOMALY_INBOUND=5         # Threshold for blocking requests
-      - ANOMALY_OUTBOUND=4        # Threshold for blocking responses
-      
-      # Logging settings
-      - LOGLEVEL=debug
-      - ERRORLOG=/dev/stdout
-      - ACCESSLOG=/dev/stdout
-      - MODSEC_AUDIT_LOG=/dev/stdout
-      
-      # Allow common operations for Juice Shop to function
-      - ALLOWED_METHODS=GET HEAD POST PUT DELETE OPTIONS PATCH
-      - ALLOWED_REQUEST_CONTENT_TYPE=|application/x-www-form-urlencoded| |multipart/form-data| |multipart/related| |text/xml| |application/xml| |application/soap+xml| |application/json| |application/cloudevents+json| |application/cloudevents-batch+json|
-    volumes:
-      # Add custom exclusion rules to prevent false positives
-      - ./REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
-      - ./RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
-    networks:
-      - waf-network
-
-networks:
-  waf-network:
-    driver: bridge
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - juice-shop
+    restart: unless-stopped
