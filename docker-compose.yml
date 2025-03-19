@@ -31,8 +31,9 @@ services:
     volumes:
       # Tạo volume cho các file log để fail2ban có thể đọc
       - ./logs:/var/log/nginx
-      # Volume cho thư mục cấu hình fail2ban (tùy chọn, để dễ dàng cập nhật)
-      - ./fail2ban:/etc/fail2ban
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     depends_on:
       - juice-shop
     restart: unless-stopped
